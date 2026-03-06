@@ -1,4 +1,5 @@
 import collections
+import re
 
 class QueueManager(object):
 
@@ -14,11 +15,20 @@ class QueueManager(object):
 			self.song2singer[s['songId']] = s['singer']
 		return self.song2singer[s['songId']]
 	
+	def normalizeSinger(self, singer):
+		# Extract first singer if multiple are listed (e.g., "John and Mary" -> "John")
+		singer = re.split(r'\s+(?:and|&)\s+', singer, maxsplit=1, flags=re.IGNORECASE)[0]
+		# Strip trailing numbers (e.g., "John2" -> "John")
+		singer = re.sub(r'\d+$', '', singer)
+		return singer.strip()
+
 	def getParsedSinger(self, s):
 		singer = self.getSinger(s)
-		if singer.endswith('!'):
-			return singer[:-1], True
-		return singer, False
+		bang = singer.endswith('!')
+		if bang:
+			singer = singer[:-1]
+		singer = self.normalizeSinger(singer)
+		return singer, bang
 	
 	def reconcile(self, queue):
 		if not queue:
